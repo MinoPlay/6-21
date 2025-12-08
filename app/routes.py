@@ -194,6 +194,67 @@ def export_data():
         download_name=filename
     )
 
+@bp.route('/import', methods=['POST'])
+def import_data():
+    """Import habit data from JSON file."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    if not file.filename.endswith('.json'):
+        return jsonify({'error': 'File must be a JSON file'}), 400
+    
+    try:
+        # Parse JSON data
+        data = json.load(file)
+        
+        # Validate structure
+        if 'habits' not in data:
+            return jsonify({'error': 'Invalid file format'}), 400
+        
+        # Clear existing data
+        HabitEntry.query.delete()
+        Habit.query.delete()
+        db.session.commit()
+        
+        # Import habits and entries
+        habit_id_map = {}  # Map old IDs to new IDs
+        
+        for habit_data in data['habits']:
+            # Create new habit
+            habit = Habit(
+                name=habit_data['name'],
+                order=habit_data['order']
+            )
+            db.session.add(habit)
+            db.session.flush()  # Get the new ID
+            
+            habit_id_map[habit_data['id']] = habit.id
+            
+            # Import entries for this habit
+            if 'entries' in habit_data:
+                for entry_data in habit_data['entries']:
+                    entry_date = datetime.strptime(entry_data['date'], '%Y-%m-%d').date()
+                    entry = HabitEntry(
+                        habit_id=habit.id,
+                        date=entry_date,
+                        completed=entry_data['completed']
+                    )
+                    db.session.add(entry)
+        
+        db.session.commit()
+        
+        return redirect(url_for('main.index'))
+    
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Invalid JSON file'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @bp.route('/reset', methods=['POST'])
 def reset_challenge():
     """Reset and start a new 21-day challenge."""

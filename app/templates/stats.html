@@ -109,9 +109,15 @@
     
     <!-- Actions -->
     <div class="stats-actions">
-        <a href="{{ url_for('main.export') }}" class="btn btn-primary" download>
+        <a href="{{ url_for('main.export_data') }}" class="btn btn-primary" download>
             💾 Export Data (JSON)
         </a>
+        <label for="import-file" class="btn btn-primary" style="cursor: pointer;">
+            📁 Import Data (JSON)
+        </label>
+        <form id="import-form" method="POST" action="{{ url_for('main.import_data') }}" enctype="multipart/form-data" style="display: none;">
+            <input type="file" id="import-file" name="file" accept=".json" onchange="if(confirm('This will replace all current data. Continue?')) this.form.submit();">
+        </form>
         <a href="{{ url_for('main.calendar') }}" class="btn btn-secondary">
             📅 View Calendar
         </a>
