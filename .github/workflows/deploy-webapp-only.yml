@@ -89,6 +89,12 @@ jobs:
         echo "webAppUri=$WEB_APP_URI" >> $GITHUB_OUTPUT
         echo "Web App URL: $WEB_APP_URI"
 
+    - name: Start Web App
+      run: |
+        echo "Starting Web App..."
+        az webapp start --name ${{ inputs.webapp-name }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+        echo "✅ Web App started successfully"
+
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v3
       with:

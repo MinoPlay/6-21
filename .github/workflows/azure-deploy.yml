@@ -110,6 +110,12 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+    - name: Start Web App
+      run: |
+        echo "Starting Web App..."
+        az webapp start --name ${{ needs.deploy-infrastructure.outputs.webapp-name }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+        echo "✅ Web App started successfully"
+
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v3
       with:
