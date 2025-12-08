@@ -1,0 +1,127 @@
+name: Deploy Habit Tracker to Azure
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: rg-habit-tracker
+  AZURE_LOCATION: northeurope
+  ENVIRONMENT_NAME: production
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Create deployment package
+      run: |
+        mkdir -p publish
+        cp -r app publish/
+        cp -r app/static publish/app/
+        cp -r app/templates publish/app/
+        cp config.py publish/
+        cp run.py publish/
+        cp requirements.txt publish/
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: habit-tracker-app
+        path: ./publish
+
+  deploy-infrastructure:
+    runs-on: ubuntu-latest
+    needs: build
+    outputs:
+      webapp-name: ${{ steps.deploy-bicep.outputs.webAppName }}
+      webapp-url: ${{ steps.deploy-bicep.outputs.webAppUri }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Login to Azure
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Create Resource Group
+      run: |
+        az group create \
+          --name ${{ env.AZURE_RESOURCE_GROUP }} \
+          --location ${{ env.AZURE_LOCATION }}
+
+    - name: Deploy Bicep template
+      id: deploy-bicep
+      uses: azure/arm-deploy@v2
+      with:
+        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+        template: ./infra/main.bicep
+        parameters: environmentName=${{ env.ENVIRONMENT_NAME }}
+        failOnStdErr: false
+
+    - name: Output infrastructure details
+      run: |
+        echo "✅ Infrastructure deployment completed"
+        echo "🌐 Web App Name: ${{ steps.deploy-bicep.outputs.webAppName }}"
+        echo "🔗 Web App URL: ${{ steps.deploy-bicep.outputs.webAppUri }}"
+
+    - name: Logout from Azure
+      if: always()
+      run: az logout
+
+  deploy-webapp:
+    runs-on: ubuntu-latest
+    needs: deploy-infrastructure
+    
+    steps:
+    - name: Download application artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: habit-tracker-app
+        path: ./publish
+
+    - name: Login to Azure
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ needs.deploy-infrastructure.outputs.webapp-name }}
+        package: ./publish
+
+    - name: Deployment summary
+      run: |
+        echo "🚀 Deployment completed successfully!"
+        echo "🌐 Application URL: ${{ needs.deploy-infrastructure.outputs.webapp-url }}"
+        echo "📊 Azure Portal: https://portal.azure.com/#@/resource/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.Web/sites/${{ needs.deploy-infrastructure.outputs.webapp-name }}"
+
+    - name: Logout from Azure
+      if: always()
+      run: az logout
