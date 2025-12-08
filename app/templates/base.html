@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="description" content="Track 6 habits for 21 days">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="{{ url_for('main.manifest') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Habits">
+    
+    <title>{% block title %}21-Day Habit Tracker{% endblock %}</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
+                <span class="nav-icon">📝</span>
+                <span class="nav-text">Today</span>
+            </a>
+            <a href="{{ url_for('main.calendar') }}" class="nav-link {% if request.endpoint == 'main.calendar' %}active{% endif %}">
+                <span class="nav-icon">📅</span>
+                <span class="nav-text">Calendar</span>
+            </a>
+            <a href="{{ url_for('main.stats') }}" class="nav-link {% if request.endpoint == 'main.stats' %}active{% endif %}">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Stats</span>
+            </a>
+            <a href="{{ url_for('main.setup') }}" class="nav-link {% if request.endpoint == 'main.setup' %}active{% endif %}">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">Setup</span>
+            </a>
+        </div>
+    </nav>
+    
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Install Prompt -->
+    <div id="installPrompt" class="install-prompt" style="display: none;">
+        <div class="install-content">
+            <p>📱 Install this app on your home screen for quick access!</p>
+            <div class="install-buttons">
+                <button id="installButton" class="btn btn-primary">Install</button>
+                <button id="dismissInstall" class="btn btn-secondary">Later</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

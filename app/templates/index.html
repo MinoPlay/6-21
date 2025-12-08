@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{{ current_date.strftime('%B %d, %Y') }} - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="daily-container">
+    <!-- Date Navigation -->
+    <div class="date-navigation">
+        <a href="{{ url_for('main.index', date=prev_date.isoformat()) }}" class="nav-arrow">
+            ← Previous
+        </a>
+        
+        <div class="current-date">
+            <h2 class="date-display">{{ current_date.strftime('%A') }}</h2>
+            <p class="date-subtext">{{ current_date.strftime('%B %d, %Y') }}</p>
+            {% if current_date != today %}
+            <a href="{{ url_for('main.index') }}" class="btn-today">Jump to Today</a>
+            {% endif %}
+        </div>
+        
+        <a href="{{ url_for('main.index', date=next_date.isoformat()) }}" class="nav-arrow">
+            Next →
+        </a>
+    </div>
+    
+    <!-- Habits List -->
+    <div class="habits-list">
+        {% for habit in habits %}
+        <div class="habit-item">
+            <div class="habit-checkbox-container">
+                <input 
+                    type="checkbox" 
+                    id="habit-{{ habit.id }}" 
+                    class="habit-checkbox-input"
+                    data-habit-id="{{ habit.id }}"
+                    data-date="{{ current_date.isoformat() }}"
+                    {% if entries[habit.id].completed %}checked{% endif %}
+                >
+                <label for="habit-{{ habit.id }}" class="habit-checkbox-label">
+                    <span class="checkmark"></span>
+                    <span class="habit-name">{{ habit.name }}</span>
+                </label>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Progress Summary -->
+    <div class="daily-progress">
+        {% set completed_count = entries.values()|selectattr('completed')|list|length %}
+        <div class="progress-text">
+            <span class="progress-number">{{ completed_count }}/{{ habits|length }}</span>
+            <span class="progress-label">habits completed</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ (completed_count / habits|length * 100)|int }}%"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Update progress bar when checkboxes change
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.habit-checkbox-input');
+    const progressNumber = document.querySelector('.progress-number');
+    const progressFill = document.querySelector('.progress-fill');
+    const totalHabits = {{ habits|length }};
+    
+    function updateProgress() {
+        const checkedCount = document.querySelectorAll('.habit-checkbox-input:checked').length;
+        progressNumber.textContent = `${checkedCount}/${totalHabits}`;
+        const percentage = (checkedCount / totalHabits * 100);
+        progressFill.style.width = `${percentage}%`;
+    }
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateProgress);
+    });
+});
+</script>
+{% endblock %}

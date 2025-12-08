@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}21-Day Calendar - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="calendar-container">
+    <h1 class="page-title">📅 21-Day Overview</h1>
+    
+    <div class="calendar-scroll">
+        <div class="calendar-grid">
+            <!-- Header Row with Dates -->
+            <div class="calendar-header">
+                <div class="calendar-cell calendar-corner">Habit</div>
+                {% for date in dates %}
+                <div class="calendar-cell calendar-date {% if date == today %}calendar-today{% endif %}">
+                    <div class="date-day">{{ date.strftime('%d') }}</div>
+                    <div class="date-weekday">{{ date.strftime('%a') }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Habit Rows -->
+            {% for row in calendar_data %}
+            <div class="calendar-row">
+                <div class="calendar-cell calendar-habit-name">
+                    {{ row.habit.name }}
+                </div>
+                {% for date in dates %}
+                    {% set date_key = date.isoformat() %}
+                    {% set completed = row.entries[date_key] %}
+                    <a href="{{ url_for('main.index', date=date_key) }}" 
+                       class="calendar-cell calendar-entry {% if completed %}completed{% else %}incomplete{% endif %} {% if date == today %}today{% endif %}">
+                        {% if completed %}
+                        <span class="entry-check">✓</span>
+                        {% else %}
+                        <span class="entry-empty">○</span>
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Legend -->
+    <div class="calendar-legend">
+        <div class="legend-item">
+            <span class="legend-icon completed">✓</span>
+            <span class="legend-text">Completed</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-icon incomplete">○</span>
+            <span class="legend-text">Not Done</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-icon today-marker">📍</span>
+            <span class="legend-text">Today</span>
+        </div>
+    </div>
+    
+    <p class="calendar-help">
+        💡 Tap any date cell to jump to that day and edit
+    </p>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.calendar-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 1rem 0;
+}
+
+.calendar-grid {
+    display: inline-block;
+    min-width: 100%;
+}
+
+.calendar-header,
+.calendar-row {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.calendar-cell {
+    min-width: 44px;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    background: white;
+    border: 1px solid #e0e0e0;
+}
+
+.calendar-corner {
+    min-width: 120px;
+    font-weight: 600;
+    background: #f5f5f5;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+}
+
+.calendar-habit-name {
+    min-width: 120px;
+    text-align: left;
+    font-weight: 500;
+    background: #fafafa;
+    position: sticky;
+    left: 0;
+    z-index: 9;
+}
+
+.calendar-date {
+    background: #f5f5f5;
+    font-weight: 500;
+}
+
+.calendar-today {
+    background: #fff3cd;
+    border-color: #ffc107;
+}
+
+.date-day {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.date-weekday {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.calendar-entry {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-entry.completed {
+    background: #c8e6c9;
+    border-color: #4CAF50;
+}
+
+.calendar-entry.incomplete {
+    background: #ffebee;
+    border-color: #ef5350;
+}
+
+.calendar-entry:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.calendar-entry.today {
+    border: 2px solid #ffc107;
+    font-weight: 600;
+}
+
+.entry-check {
+    color: #2e7d32;
+    font-size: 1.25rem;
+}
+
+.entry-empty {
+    color: #c62828;
+    font-size: 1.25rem;
+}
+
+.calendar-legend {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 1.5rem 0 1rem;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    border: 1px solid #e0e0e0;
+}
+
+.legend-icon.completed {
+    background: #c8e6c9;
+    border-color: #4CAF50;
+    color: #2e7d32;
+}
+
+.legend-icon.incomplete {
+    background: #ffebee;
+    border-color: #ef5350;
+    color: #c62828;
+}
+
+.legend-icon.today-marker {
+    background: #fff3cd;
+    border-color: #ffc107;
+}
+
+.calendar-help {
+    text-align: center;
+    color: #666;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+}
+</style>
+{% endblock %}

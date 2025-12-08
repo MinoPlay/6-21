@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="stats-container">
+    <h1 class="page-title">📊 Your Statistics</h1>
+    
+    <!-- Overall Stats -->
+    <div class="stats-card">
+        <h2 class="stats-card-title">Overall Progress</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ overall_stats.overall_completion_rate }}%</div>
+                <div class="stat-label">Completion Rate</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ overall_stats.total_completed }}</div>
+                <div class="stat-label">Total Completed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ overall_stats.total_possible }}</div>
+                <div class="stat-label">Total Possible</div>
+            </div>
+        </div>
+        
+        <div class="progress-bar-large">
+            <div class="progress-fill" style="width: {{ overall_stats.overall_completion_rate }}%"></div>
+        </div>
+    </div>
+    
+    <!-- Best and Worst Habits -->
+    {% if overall_stats.best_habit %}
+    <div class="stats-card">
+        <h2 class="stats-card-title">Highlights</h2>
+        <div class="highlight-grid">
+            <div class="highlight-item highlight-best">
+                <div class="highlight-icon">🏆</div>
+                <div class="highlight-content">
+                    <div class="highlight-title">Best Habit</div>
+                    <div class="highlight-name">{{ overall_stats.best_habit.habit.name }}</div>
+                    <div class="highlight-stats">{{ overall_stats.best_habit.stats.completion_rate }}% complete</div>
+                </div>
+            </div>
+            
+            {% if overall_stats.worst_habit and overall_stats.worst_habit.habit.id != overall_stats.best_habit.habit.id %}
+            <div class="highlight-item highlight-worst">
+                <div class="highlight-icon">💪</div>
+                <div class="highlight-content">
+                    <div class="highlight-title">Needs Attention</div>
+                    <div class="highlight-name">{{ overall_stats.worst_habit.habit.name }}</div>
+                    <div class="highlight-stats">{{ overall_stats.worst_habit.stats.completion_rate }}% complete</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Individual Habit Stats -->
+    <div class="stats-card">
+        <h2 class="stats-card-title">Habit Breakdown</h2>
+        {% for habit_stat in overall_stats.habit_stats %}
+        <div class="habit-stat-row">
+            <div class="habit-stat-header">
+                <span class="habit-stat-name">{{ habit_stat.habit.name }}</span>
+                <span class="habit-stat-rate">{{ habit_stat.stats.completion_rate }}%</span>
+            </div>
+            <div class="habit-stat-details">
+                <div class="habit-stat-item">
+                    <span class="stat-icon">🔥</span>
+                    <span class="stat-text">Current: {{ habit_stat.stats.current_streak }} days</span>
+                </div>
+                <div class="habit-stat-item">
+                    <span class="stat-icon">⭐</span>
+                    <span class="stat-text">Best: {{ habit_stat.stats.longest_streak }} days</span>
+                </div>
+                <div class="habit-stat-item">
+                    <span class="stat-icon">✅</span>
+                    <span class="stat-text">{{ habit_stat.stats.total_completed }}/{{ habit_stat.stats.total_days }}</span>
+                </div>
+            </div>
+            <div class="progress-bar-small">
+                <div class="progress-fill" style="width: {{ habit_stat.stats.completion_rate }}%"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Day of Week Stats -->
+    {% if week_day_stats %}
+    <div class="stats-card">
+        <h2 class="stats-card-title">Best Days of the Week</h2>
+        <div class="weekday-stats">
+            {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                {% if day in week_day_stats %}
+                <div class="weekday-item">
+                    <div class="weekday-name">{{ day[:3] }}</div>
+                    <div class="weekday-bar">
+                        <div class="weekday-fill" style="width: {{ week_day_stats[day] }}%"></div>
+                    </div>
+                    <div class="weekday-percent">{{ week_day_stats[day] }}%</div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Actions -->
+    <div class="stats-actions">
+        <a href="{{ url_for('main.export') }}" class="btn btn-primary" download>
+            💾 Export Data (JSON)
+        </a>
+        <a href="{{ url_for('main.calendar') }}" class="btn btn-secondary">
+            📅 View Calendar
+        </a>
+    </div>
+</div>
+{% endblock %}

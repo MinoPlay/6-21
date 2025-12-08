@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Setup - Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="setup-container">
+    <h1 class="page-title">🎯 Setup Your 6 Habits</h1>
+    <p class="page-subtitle">Choose 6 habits you want to track for the next 21 days</p>
+    
+    {% if existing_habits %}
+    <div class="warning-box">
+        <p>⚠️ You already have habits set up. Creating new ones will replace the existing habits and delete all tracking data.</p>
+    </div>
+    {% endif %}
+    
+    <form method="POST" class="setup-form" id="setupForm">
+        {% for i in range(1, 7) %}
+        <div class="form-group">
+            <label for="habit_{{ i }}" class="form-label">Habit {{ i }}</label>
+            <input 
+                type="text" 
+                id="habit_{{ i }}" 
+                name="habit_{{ i }}" 
+                class="form-input"
+                placeholder="e.g., Exercise for 30 minutes"
+                maxlength="100"
+                required
+                {% if existing_habits and existing_habits|length >= i %}
+                value="{{ existing_habits[i-1].name }}"
+                {% endif %}
+            >
+        </div>
+        {% endfor %}
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large">
+                {% if existing_habits %}
+                🔄 Update Habits
+                {% else %}
+                ✨ Start Tracking
+                {% endif %}
+            </button>
+        </div>
+    </form>
+    
+    {% if existing_habits %}
+    <div class="additional-actions">
+        <a href="{{ url_for('main.export') }}" class="btn btn-secondary" download>
+            💾 Export Data (JSON)
+        </a>
+        <form method="POST" action="{{ url_for('main.reset_challenge') }}" style="display: inline;" 
+              onsubmit="return confirm('Are you sure you want to reset all entries and start a new 21-day challenge? Your habits will remain, but all completion data will be deleted.');">
+            <button type="submit" class="btn btn-warning">
+                🔄 Reset Challenge
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
