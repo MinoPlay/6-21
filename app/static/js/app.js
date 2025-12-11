@@ -9,11 +9,6 @@ if ('serviceWorker' in navigator) {
 
 // ==================== User Management ====================
 
-// Track shown achievements in session to prevent duplicates
-const shownAchievements = new Set(
-    JSON.parse(sessionStorage.getItem('shownAchievements') || '[]')
-);
-
 // Save username to localStorage
 function saveUsername(username) {
     localStorage.setItem('habitTrackerUsername', username);
@@ -70,12 +65,8 @@ async function checkNewAchievements() {
         
         if (data.achievements && data.achievements.length > 0) {
             for (const achievement of data.achievements) {
-                // Only show if not already shown in this session
-                if (!shownAchievements.has(achievement.key)) {
-                    showAchievementToast(achievement);
-                    shownAchievements.add(achievement.key);
-                    sessionStorage.setItem('shownAchievements', JSON.stringify([...shownAchievements]));
-                }
+                // Database tracks viewed status, so just show all unviewed achievements
+                showAchievementToast(achievement);
             }
         }
     } catch (error) {
@@ -114,11 +105,11 @@ function showAchievementToast(achievement) {
     }, 5000);
 }
 
-// Close achievement toast and mark as viewed
+// Close achievement toast and mark as viewed in database
 async function closeAchievementToast(toast, achievementKey) {
     toast.style.animation = 'toastSlideOut 0.3s ease';
     
-    // Mark as viewed
+    // Mark as viewed in database - this syncs across all devices/browsers
     try {
         await fetch('/api/achievements/mark-viewed', {
             method: 'POST',
