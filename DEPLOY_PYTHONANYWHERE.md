@@ -159,6 +159,43 @@ For production use, consider:
 2. Using environment variables for sensitive data
 3. Enabling HTTPS (included by default on PythonAnywhere)
 
+## Frequently Asked Questions (FAQ)
+
+### Q: After git pull, my UI looks broken - tabs don't work, user badge is in wrong place, etc.
+
+**A:** This is a static file caching issue. The app includes automatic cache-busting that appends version parameters to CSS/JS files (e.g., `main.css?v=1733936547`), but you need to reload the web app for changes to take effect.
+
+**Solution:**
+1. In PythonAnywhere Bash console:
+   ```bash
+   cd ~/6-21
+   git pull
+   ```
+2. Go to the **Web tab** and click the green **Reload** button
+3. Hard refresh your browser:
+   - Windows: `Ctrl + Shift + R` or `Ctrl + F5`
+   - Mac: `Cmd + Shift + R`
+   - Or use incognito/private window
+
+**Why this happens:** Browsers and servers cache static files (CSS/JS/images) for performance. When you update code, old cached files may still be served. The app now automatically adds version timestamps to static file URLs, forcing browsers to fetch new versions after updates.
+
+### Q: The database reset but I didn't lose my data?
+
+**A:** Make sure you're backing up `habits.db` before major updates:
+```bash
+cp ~/6-21/habits.db ~/6-21/habits.db.backup
+```
+
+### Q: How do I check error logs?
+
+**A:** In the PythonAnywhere Web tab, scroll to the bottom and click:
+- **Error log** - Shows Python errors and stack traces
+- **Server log** - Shows HTTP requests and responses
+
+### Q: Can multiple users use the app simultaneously?
+
+**A:** Yes! The app includes multi-user support. Each user has their own data, habits, and progress tracked separately.
+
 ## Support
 
 - [PythonAnywhere Forums](https://www.pythonanywhere.com/forums/)
