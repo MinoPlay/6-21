@@ -9,9 +9,12 @@ if ('serviceWorker' in navigator) {
 
 // ==================== User Management ====================
 
-// Track shown achievements in current session to prevent duplicates during tab switches/refreshes
+// Track shown achievements in current browser session to prevent duplicates during page navigation
+// Uses sessionStorage to persist across page loads within the same tab/window session
 // This is separate from database 'viewed' flag which persists across devices
-const shownInSession = new Set();
+const shownInSession = new Set(
+    JSON.parse(sessionStorage.getItem('shownAchievementsThisSession') || '[]')
+);
 
 // Save username to localStorage
 function saveUsername(username) {
@@ -69,11 +72,15 @@ async function checkNewAchievements() {
         
         if (data.achievements && data.achievements.length > 0) {
             for (const achievement of data.achievements) {
-                // Only show if not already shown in this session (prevents re-showing on tab switch/refresh)
-                // Database 'viewed' flag handles cross-device persistence
+                // Only show if not already shown in this session (prevents re-showing on page navigation)
+                // sessionStorage persists across page loads in same tab/window
+                // Database 'viewed' flag handles cross-device/browser persistence
                 if (!shownInSession.has(achievement.key)) {
                     showAchievementToast(achievement);
                     shownInSession.add(achievement.key);
+                    // Save to sessionStorage to persist across page navigations
+                    sessionStorage.setItem('shownAchievementsThisSession', 
+                        JSON.stringify([...shownInSession]));
                 }
             }
         }
