@@ -9,6 +9,10 @@ if ('serviceWorker' in navigator) {
 
 // ==================== User Management ====================
 
+// Track shown achievements in current session to prevent duplicates during tab switches/refreshes
+// This is separate from database 'viewed' flag which persists across devices
+const shownInSession = new Set();
+
 // Save username to localStorage
 function saveUsername(username) {
     localStorage.setItem('habitTrackerUsername', username);
@@ -65,8 +69,12 @@ async function checkNewAchievements() {
         
         if (data.achievements && data.achievements.length > 0) {
             for (const achievement of data.achievements) {
-                // Database tracks viewed status, so just show all unviewed achievements
-                showAchievementToast(achievement);
+                // Only show if not already shown in this session (prevents re-showing on tab switch/refresh)
+                // Database 'viewed' flag handles cross-device persistence
+                if (!shownInSession.has(achievement.key)) {
+                    showAchievementToast(achievement);
+                    shownInSession.add(achievement.key);
+                }
             }
         }
     } catch (error) {
