@@ -32,11 +32,19 @@
             <a href="{{ url_for('main.stats') }}" class="nav-link {% if request.endpoint == 'main.stats' %}active{% endif %}">
                 <span class="nav-icon">📊</span>
                 <span class="nav-text">Stats</span>
+                <span class="badge" id="achievementsBadge" style="display: none;"></span>
             </a>
             <a href="{{ url_for('main.setup') }}" class="nav-link {% if request.endpoint == 'main.setup' %}active{% endif %}">
                 <span class="nav-icon">⚙️</span>
                 <span class="nav-text">Setup</span>
             </a>
+        </div>
+        <div class="user-badge" id="userBadge">
+            <span class="user-icon">👤</span>
+            <span class="user-name" id="userName">Loading...</span>
+            <div class="user-dropdown" id="userDropdown">
+                <a href="{{ url_for('main.user_select') }}" class="dropdown-item">Switch User</a>
+            </div>
         </div>
     </nav>
     

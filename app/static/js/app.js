@@ -7,6 +7,178 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// ==================== User Management ====================
+
+// Track shown achievements in session to prevent duplicates
+const shownAchievements = new Set(
+    JSON.parse(sessionStorage.getItem('shownAchievements') || '[]')
+);
+
+// Save username to localStorage
+function saveUsername(username) {
+    localStorage.setItem('habitTrackerUsername', username);
+}
+
+// Load username from localStorage
+function loadUsername() {
+    return localStorage.getItem('habitTrackerUsername');
+}
+
+// Clear username from localStorage
+function clearUsername() {
+    localStorage.removeItem('habitTrackerUsername');
+}
+
+// Load current user info and update UI
+async function loadCurrentUser() {
+    try {
+        const response = await fetch('/api/user/current');
+        const data = await response.json();
+        
+        if (data.username) {
+            const userNameEl = document.getElementById('userName');
+            if (userNameEl) {
+                userNameEl.textContent = data.username;
+            }
+            
+            // Update achievement badge
+            updateAchievementBadge(data.unviewed_achievements || 0);
+        }
+    } catch (error) {
+        console.error('Error loading user:', error);
+    }
+}
+
+// Update achievement badge count
+function updateAchievementBadge(count) {
+    const badge = document.getElementById('achievementsBadge');
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+// Check for new achievements
+async function checkNewAchievements() {
+    try {
+        const response = await fetch('/api/achievements/new');
+        const data = await response.json();
+        
+        if (data.achievements && data.achievements.length > 0) {
+            for (const achievement of data.achievements) {
+                // Only show if not already shown in this session
+                if (!shownAchievements.has(achievement.key)) {
+                    showAchievementToast(achievement);
+                    shownAchievements.add(achievement.key);
+                    sessionStorage.setItem('shownAchievements', JSON.stringify([...shownAchievements]));
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error checking achievements:', error);
+    }
+}
+
+// Show achievement toast notification with confetti
+function showAchievementToast(achievement) {
+    const toast = document.createElement('div');
+    toast.className = 'achievement-toast';
+    toast.innerHTML = `
+        <div class="achievement-toast-emoji">${achievement.emoji}</div>
+        <div class="achievement-toast-content">
+            <div class="achievement-toast-title">Achievement Unlocked!</div>
+            <div class="achievement-toast-name">${achievement.name}</div>
+            <div class="achievement-toast-desc">${achievement.description}</div>
+        </div>
+        <button class="achievement-toast-close">&times;</button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Trigger confetti
+    createConfetti();
+    
+    // Close button
+    const closeBtn = toast.querySelector('.achievement-toast-close');
+    closeBtn.addEventListener('click', () => {
+        closeAchievementToast(toast, achievement.achievement_key);
+    });
+    
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+        closeAchievementToast(toast, achievement.achievement_key);
+    }, 5000);
+}
+
+// Close achievement toast and mark as viewed
+async function closeAchievementToast(toast, achievementKey) {
+    toast.style.animation = 'toastSlideOut 0.3s ease';
+    
+    // Mark as viewed
+    try {
+        await fetch('/api/achievements/mark-viewed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ achievement_keys: [achievementKey] })
+        });
+        
+        // Update badge count
+        loadCurrentUser();
+    } catch (error) {
+        console.error('Error marking achievement as viewed:', error);
+    }
+    
+    setTimeout(() => toast.remove(), 300);
+}
+
+// Create confetti animation
+function createConfetti() {
+    const colors = ['#FFD700', '#FFA500', '#FF6347', '#4CAF50', '#2196F3', '#9C27B0'];
+    const confettiCount = 30;
+    
+    for (let i = 0; i < confettiCount; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 0.3 + 's';
+        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => confetti.remove(), 4000);
+    }
+}
+
+// User badge dropdown toggle
+document.addEventListener('DOMContentLoaded', () => {
+    const userBadge = document.getElementById('userBadge');
+    const userDropdown = document.getElementById('userDropdown');
+    
+    if (userBadge && userDropdown) {
+        userBadge.addEventListener('click', (e) => {
+            e.stopPropagation();
+            userDropdown.classList.toggle('show');
+        });
+        
+        document.addEventListener('click', () => {
+            userDropdown.classList.remove('show');
+        });
+    }
+    
+    // Load current user on page load
+    loadCurrentUser();
+    
+    // Always check for new achievements on page load to update badge, but only show toasts once per session
+    checkNewAchievements();
+});
+
+// ==================== PWA Install Prompt ====================
+
 // PWA Install Prompt
 let deferredPrompt;
 const installPrompt = document.getElementById('installPrompt');
@@ -76,6 +248,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Add celebration animation on check
                     if (data.completed) {
                         addCelebrationEffect(e.target);
+                    }
+                    
+                    // Check for new achievements
+                    if (data.new_achievements && data.new_achievements.length > 0) {
+                        for (const achievement of data.new_achievements) {
+                            setTimeout(() => showAchievementToast(achievement), 300);
+                        }
                     }
                 }
             } catch (error) {

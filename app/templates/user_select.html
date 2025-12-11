@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4CAF50">
+    <title>Select User - 21-Day Habit Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .user-select-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .user-select-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .user-select-header h1 {
+            color: #4CAF50;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .user-select-header p {
+            color: #666;
+        }
+        
+        .user-form {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c62828;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background: #45a049;
+        }
+        
+        .existing-users {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .existing-users h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.3rem;
+        }
+        
+        .user-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .user-item {
+            padding: 12px 16px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-item:hover {
+            background: #e8f5e9;
+        }
+        
+        .user-item button {
+            background: none;
+            border: none;
+            color: inherit;
+            font: inherit;
+            cursor: pointer;
+            text-align: left;
+            flex: 1;
+            padding: 0;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .user-date {
+            font-size: 0.85rem;
+            color: #666;
+            margin-left: 10px;
+        }
+        
+        .no-users {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .helper-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-select-container">
+        <div class="user-select-header">
+            <h1>🎯 21-Day Habit Tracker</h1>
+            <p>Select your profile or create a new one</p>
+        </div>
+        
+        <div class="user-form">
+            <form method="POST" id="userForm">
+                {% if error %}
+                <div class="error-message">
+                    {{ error }}
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="Enter your name"
+                        autocomplete="off"
+                        autofocus
+                        required
+                        minlength="2"
+                        maxlength="20"
+                        pattern="[a-zA-Z0-9 -]+"
+                    >
+                    <div class="helper-text">
+                        2-20 characters (letters, numbers, spaces, hyphens)
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">Continue</button>
+            </form>
+        </div>
+        
+        {% if users %}
+        <div class="existing-users">
+            <h2>Existing Users</h2>
+            <ul class="user-list">
+                {% for user in users %}
+                <li class="user-item">
+                    <button type="button" onclick="selectUser('{{ user.username }}')">
+                        <span class="user-name">{{ user.username }}</span>
+                        <span class="user-date">Created {{ user.created_at.strftime('%b %d, %Y') }}</span>
+                    </button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <div class="existing-users">
+            <div class="no-users">No existing users. Create your first profile above!</div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // Load username from localStorage if available
+        const savedUsername = localStorage.getItem('habit_tracker_username');
+        if (savedUsername) {
+            document.getElementById('username').value = savedUsername;
+        }
+        
+        // Save username to localStorage on form submit
+        document.getElementById('userForm').addEventListener('submit', function() {
+            const username = document.getElementById('username').value;
+            localStorage.setItem('habit_tracker_username', username);
+        });
+        
+        // Select existing user
+        function selectUser(username) {
+            document.getElementById('username').value = username;
+            document.getElementById('userForm').submit();
+        }
+    </script>
+</body>
+</html>

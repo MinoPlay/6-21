@@ -5,7 +5,7 @@
 {% block content %}
 <div class="setup-container">
     <h1 class="page-title">🎯 Setup Your 6 Habits</h1>
-    <p class="page-subtitle">Choose 6 habits you want to track for the next 21 days</p>
+    <p class="page-subtitle">Welcome, <strong>{{ user.username }}</strong>! Choose 6 habits you want to track for the next 21 days</p>
     
     {% if existing_habits %}
     <div class="warning-box">
@@ -48,12 +48,6 @@
         <a href="{{ url_for('main.export_data') }}" class="btn btn-secondary" download>
             💾 Export Data (JSON)
         </a>
-        <label for="import-file-setup" class="btn btn-secondary" style="cursor: pointer;">
-            📁 Import Data (JSON)
-        </label>
-        <form id="import-form-setup" method="POST" action="{{ url_for('main.import_data') }}" enctype="multipart/form-data" style="display: none;">
-            <input type="file" id="import-file-setup" name="file" accept=".json" onchange="if(confirm('This will replace all current data. Continue?')) this.form.submit();">
-        </form>
         <form method="POST" action="{{ url_for('main.reset_challenge') }}" style="display: inline;" 
               onsubmit="return confirm('Are you sure you want to reset all entries and start a new 21-day challenge? Your habits will remain, but all completion data will be deleted.');">
             <button type="submit" class="btn btn-warning">
@@ -61,6 +55,41 @@
             </button>
         </form>
     </div>
+    
+    <div class="danger-zone">
+        <h3>⚠️ Danger Zone</h3>
+        <p>Delete all your data including habits, entries, and achievements. This action cannot be undone.</p>
+        <button type="button" class="btn btn-danger" onclick="confirmDeleteAccount()">
+            🗑️ Delete My Data
+        </button>
+    </div>
     {% endif %}
 </div>
+
+<script>
+function confirmDeleteAccount() {
+    const username = '{{ user.username }}';
+    if (confirm(`Are you absolutely sure you want to delete all data for ${username}?\n\nThis will permanently delete:\n• All 6 habits\n• All completion entries\n• All achievements\n\nThis action CANNOT be undone.`)) {
+        if (confirm('Final confirmation: Delete everything?')) {
+            fetch('/api/user/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('All data deleted successfully.');
+                    localStorage.removeItem('habitTrackerUsername');
+                    window.location.href = '/user/select';
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error deleting data: ' + error);
+            });
+        }
+    }
+}
+</script>
 {% endblock %}

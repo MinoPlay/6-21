@@ -6,121 +6,227 @@
 <div class="stats-container">
     <h1 class="page-title">📊 Your Statistics</h1>
     
-    <!-- Overall Stats -->
-    <div class="stats-card">
-        <h2 class="stats-card-title">Overall Progress</h2>
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-value">{{ overall_stats.overall_completion_rate }}%</div>
-                <div class="stat-label">Completion Rate</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">{{ overall_stats.total_completed }}</div>
-                <div class="stat-label">Total Completed</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value">{{ overall_stats.total_possible }}</div>
-                <div class="stat-label">Total Possible</div>
-            </div>
-        </div>
+    <!-- Tab Navigation -->
+    <div class="tabs">
+        <input type="radio" name="stats-tab" id="tab-overview" class="tab-radio" checked>
+        <label for="tab-overview" class="tab-label">Overview</label>
         
-        <div class="progress-bar-large">
-            <div class="progress-fill" style="width: {{ overall_stats.overall_completion_rate }}%"></div>
-        </div>
-    </div>
-    
-    <!-- Best and Worst Habits -->
-    {% if overall_stats.best_habit %}
-    <div class="stats-card">
-        <h2 class="stats-card-title">Highlights</h2>
-        <div class="highlight-grid">
-            <div class="highlight-item highlight-best">
-                <div class="highlight-icon">🏆</div>
-                <div class="highlight-content">
-                    <div class="highlight-title">Best Habit</div>
-                    <div class="highlight-name">{{ overall_stats.best_habit.habit.name }}</div>
-                    <div class="highlight-stats">{{ overall_stats.best_habit.stats.completion_rate }}% complete</div>
+        <input type="radio" name="stats-tab" id="tab-achievements" class="tab-radio">
+        <label for="tab-achievements" class="tab-label">Achievements</label>
+        
+        <!-- Overview Tab Content -->
+        <div class="tab-content" id="content-overview">
+            <!-- Overall Stats -->
+            <div class="stats-card">
+                <h2 class="stats-card-title">Overall Progress</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ overall_stats.overall_completion_rate }}%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ overall_stats.total_completed }}</div>
+                        <div class="stat-label">Total Completed</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ overall_stats.total_possible }}</div>
+                        <div class="stat-label">Total Possible</div>
+                    </div>
+                </div>
+                
+                <div class="progress-bar-large">
+                    <div class="progress-fill" style="width: {{ overall_stats.overall_completion_rate }}%"></div>
                 </div>
             </div>
             
-            {% if overall_stats.worst_habit and overall_stats.worst_habit.habit.id != overall_stats.best_habit.habit.id %}
-            <div class="highlight-item highlight-worst">
-                <div class="highlight-icon">💪</div>
-                <div class="highlight-content">
-                    <div class="highlight-title">Needs Attention</div>
-                    <div class="highlight-name">{{ overall_stats.worst_habit.habit.name }}</div>
-                    <div class="highlight-stats">{{ overall_stats.worst_habit.stats.completion_rate }}% complete</div>
+            <!-- Perfect Days Stats -->
+            <div class="stats-card">
+                <h2 class="stats-card-title">Daily Excellence</h2>
+                <div class="excellence-grid">
+                    <div class="excellence-item">
+                        <div class="excellence-icon">🌟</div>
+                        <div class="excellence-value">{{ overall_stats.perfect_days }}</div>
+                        <div class="excellence-label">Perfect Days</div>
+                        <div class="excellence-desc">All 6 habits</div>
+                    </div>
+                    <div class="excellence-item">
+                        <div class="excellence-icon">⭐</div>
+                        <div class="excellence-value">{{ overall_stats.almost_perfect_days }}</div>
+                        <div class="excellence-label">Almost Perfect</div>
+                        <div class="excellence-desc">5 out of 6 habits</div>
+                    </div>
+                    <div class="excellence-item">
+                        <div class="excellence-icon">📅</div>
+                        <div class="excellence-value">{{ overall_stats.days_active }}</div>
+                        <div class="excellence-label">Days Active</div>
+                        <div class="excellence-desc">Days with entries</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Best and Worst Habits -->
+            {% if overall_stats.best_habit %}
+            <div class="stats-card">
+                <h2 class="stats-card-title">Highlights</h2>
+                <div class="highlight-grid">
+                    <div class="highlight-item highlight-best">
+                        <div class="highlight-icon">🏆</div>
+                        <div class="highlight-content">
+                            <div class="highlight-title">Best Habit</div>
+                            <div class="highlight-name">{{ overall_stats.best_habit.habit.name }}</div>
+                            <div class="highlight-stats">
+                                {{ overall_stats.best_habit.stats.tracked_percent }}% tracked • 
+                                {{ overall_stats.best_habit.stats.challenge_percent }}% challenge
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if overall_stats.worst_habit and overall_stats.worst_habit.habit.id != overall_stats.best_habit.habit.id %}
+                    <div class="highlight-item highlight-worst">
+                        <div class="highlight-icon">💪</div>
+                        <div class="highlight-content">
+                            <div class="highlight-title">Needs Attention</div>
+                            <div class="highlight-name">{{ overall_stats.worst_habit.habit.name }}</div>
+                            <div class="highlight-stats">
+                                {{ overall_stats.worst_habit.stats.tracked_percent }}% tracked • 
+                                {{ overall_stats.worst_habit.stats.challenge_percent }}% challenge
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% endif %}
-        </div>
-    </div>
-    {% endif %}
-    
-    <!-- Individual Habit Stats -->
-    <div class="stats-card">
-        <h2 class="stats-card-title">Habit Breakdown</h2>
-        {% for habit_stat in overall_stats.habit_stats %}
-        <div class="habit-stat-row">
-            <div class="habit-stat-header">
-                <span class="habit-stat-name">{{ habit_stat.habit.name }}</span>
-                <span class="habit-stat-rate">{{ habit_stat.stats.completion_rate }}%</span>
-            </div>
-            <div class="habit-stat-details">
-                <div class="habit-stat-item">
-                    <span class="stat-icon">🔥</span>
-                    <span class="stat-text">Current: {{ habit_stat.stats.current_streak }} days</span>
-                </div>
-                <div class="habit-stat-item">
-                    <span class="stat-icon">⭐</span>
-                    <span class="stat-text">Best: {{ habit_stat.stats.longest_streak }} days</span>
-                </div>
-                <div class="habit-stat-item">
-                    <span class="stat-icon">✅</span>
-                    <span class="stat-text">{{ habit_stat.stats.total_completed }}/{{ habit_stat.stats.total_days }}</span>
-                </div>
-            </div>
-            <div class="progress-bar-small">
-                <div class="progress-fill" style="width: {{ habit_stat.stats.completion_rate }}%"></div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    
-    <!-- Day of Week Stats -->
-    {% if week_day_stats %}
-    <div class="stats-card">
-        <h2 class="stats-card-title">Best Days of the Week</h2>
-        <div class="weekday-stats">
-            {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
-                {% if day in week_day_stats %}
-                <div class="weekday-item">
-                    <div class="weekday-name">{{ day[:3] }}</div>
-                    <div class="weekday-bar">
-                        <div class="weekday-fill" style="width: {{ week_day_stats[day] }}%"></div>
+            
+            <!-- Individual Habit Stats -->
+            <div class="stats-card">
+                <h2 class="stats-card-title">Habit Breakdown</h2>
+                {% for habit_stat in overall_stats.habit_stats %}
+                <div class="habit-stat-row">
+                    <div class="habit-stat-header">
+                        <span class="habit-stat-name">{{ habit_stat.habit.name }}</span>
+                        <div class="habit-stat-percentages">
+                            <span class="habit-stat-challenge">{{ habit_stat.stats.challenge_completed }}/{{ habit_stat.stats.challenge_days }} • {{ habit_stat.stats.challenge_percent }}%</span>
+                        </div>
                     </div>
-                    <div class="weekday-percent">{{ week_day_stats[day] }}%</div>
+                    <div class="habit-stat-details">
+                        <div class="habit-stat-item">
+                            <span class="stat-icon">🔥</span>
+                            <span class="stat-text">Current: {{ habit_stat.stats.current_streak }} days</span>
+                        </div>
+                        <div class="habit-stat-item">
+                            <span class="stat-icon">⭐</span>
+                            <span class="stat-text">Best: {{ habit_stat.stats.longest_streak }} days</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar-single">
+                        <div class="progress-bar-small">
+                            <div class="progress-fill progress-fill-challenge" style="width: {{ habit_stat.stats.challenge_percent }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Day of Week Stats -->
+            {% if week_day_stats %}
+            <div class="stats-card">
+                <h2 class="stats-card-title">Best Days of the Week</h2>
+                <div class="weekday-stats">
+                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                        {% if day in week_day_stats %}
+                        <div class="weekday-item">
+                            <div class="weekday-name">{{ day[:3] }}</div>
+                            <div class="weekday-bar">
+                                <div class="weekday-fill" style="width: {{ week_day_stats[day] }}%"></div>
+                            </div>
+                            <div class="weekday-percent">{{ week_day_stats[day] }}%</div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Actions -->
+            <div class="stats-actions">
+                <a href="{{ url_for('main.export_data') }}" class="btn btn-primary" download>
+                    💾 Export Data (JSON)
+                </a>
+                <a href="{{ url_for('main.calendar') }}" class="btn btn-secondary">
+                    📅 View Calendar
+                </a>
+            </div>
+        </div>
+        
+        <!-- Achievements Tab Content -->
+    <div class="tab-content" id="content-achievements">
+        {% set categories = [
+            ('Milestones', 'Milestones'),
+            ('Streaks', 'Streaks'),
+            ('Excellence', 'Excellence'),
+            ('Recovery', 'Recovery')
+        ] %}            {% for category_name, category_key in categories %}
+            <div class="stats-card achievement-category">
+                <h2 class="stats-card-title">{{ category_name }}</h2>
+                
+                <!-- Unlocked Achievements -->
+                {% set unlocked = get_unlocked_achievements(current_user.id, category_key) %}
+                {% if unlocked %}
+                <div class="achievements-unlocked">
+                    <h3 class="achievement-section-title">Unlocked ({{ unlocked|length }})</h3>
+                    <div class="achievement-grid">
+                        {% for ach in unlocked %}
+                        <div class="achievement-card achievement-unlocked" title="{{ get_achievement_tooltip(ach.key, ach.definition) }}">
+                            <div class="achievement-emoji">{{ ach.emoji }}</div>
+                            <div class="achievement-info">
+                                <div class="achievement-name">{{ ach.name }}</div>
+                                <div class="achievement-desc">{{ ach.description }}</div>
+                                <div class="achievement-date">Unlocked {{ ach.unlocked_at.strftime('%b %d, %Y') }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
                 {% endif %}
+                
+                <!-- Locked Achievements with Progress -->
+                {% set locked = get_locked_with_progress(current_user.id, category_key) %}
+                {% if locked %}
+                <div class="achievements-locked">
+                    <h3 class="achievement-section-title">In Progress ({{ locked|length }})</h3>
+                    <div class="achievement-grid">
+                        {% for ach in locked %}
+                        <div class="achievement-card achievement-locked" title="{{ get_achievement_tooltip(ach.key, ach.definition, ach.progress) }}">
+                            <div class="achievement-emoji achievement-emoji-locked">{{ ach.emoji }}</div>
+                            <div class="achievement-info">
+                                <div class="achievement-name">{{ ach.name }}</div>
+                                <div class="achievement-desc">{{ ach.description }}</div>
+                                {% if ach.progress %}
+                                <div class="achievement-progress">
+                                    <div class="progress-text">{{ ach.progress.current }}/{{ ach.progress.target }} ({{ ach.progress.percent }}%)</div>
+                                    <div class="progress-bar-small">
+                                        <div class="progress-fill progress-fill-achievement" style="width: {{ ach.progress.percent }}%"></div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="achievement-progress">
+                                    <div class="progress-text">Keep going!</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if not unlocked and not locked %}
+                <p class="no-achievements">No achievements in this category yet.</p>
+                {% endif %}
+            </div>
             {% endfor %}
         </div>
-    </div>
-    {% endif %}
-    
-    <!-- Actions -->
-    <div class="stats-actions">
-        <a href="{{ url_for('main.export_data') }}" class="btn btn-primary" download>
-            💾 Export Data (JSON)
-        </a>
-        <label for="import-file" class="btn btn-primary" style="cursor: pointer;">
-            📁 Import Data (JSON)
-        </label>
-        <form id="import-form" method="POST" action="{{ url_for('main.import_data') }}" enctype="multipart/form-data" style="display: none;">
-            <input type="file" id="import-file" name="file" accept=".json" onchange="if(confirm('This will replace all current data. Continue?')) this.form.submit();">
-        </form>
-        <a href="{{ url_for('main.calendar') }}" class="btn btn-secondary">
-            📅 View Calendar
-        </a>
     </div>
 </div>
 {% endblock %}
