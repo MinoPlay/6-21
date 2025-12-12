@@ -71,17 +71,29 @@ async function checkNewAchievements() {
         const data = await response.json();
         
         if (data.achievements && data.achievements.length > 0) {
+            const achievementKeys = [];
+            
             for (const achievement of data.achievements) {
                 // Only show if not already shown in this session (prevents re-showing on page navigation)
                 // sessionStorage persists across page loads in same tab/window
-                // Database 'viewed' flag handles cross-device/browser persistence
+                // Database 'notified' flag handles cross-device/browser persistence
                 if (!shownInSession.has(achievement.key)) {
                     showAchievementToast(achievement);
                     shownInSession.add(achievement.key);
+                    achievementKeys.push(achievement.key);
                     // Save to sessionStorage to persist across page navigations
                     sessionStorage.setItem('shownAchievementsThisSession', 
                         JSON.stringify([...shownInSession]));
                 }
+            }
+            
+            // Mark all shown achievements as notified in the database
+            if (achievementKeys.length > 0) {
+                await fetch('/api/achievements/mark-notified', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ achievement_keys: achievementKeys })
+                });
             }
         }
     } catch (error) {

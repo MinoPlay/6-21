@@ -80,7 +80,7 @@ def user_current():
     if not user:
         return jsonify({'username': None})
     
-    # Get unviewed achievement count
+    # Get unviewed achievement count (for badge display)
     unviewed_count = Achievement.query.filter_by(
         user_id=user.id,
         viewed=False
@@ -138,13 +138,13 @@ def user_delete():
 @bp.route('/api/achievements/new')
 @user_required
 def achievements_new():
-    """Get list of new (unviewed) achievements."""
+    """Get list of new (unnotified) achievements."""
     from app.utils import ACHIEVEMENT_DEFINITIONS
     
     user = get_current_user()
     new_achievements = Achievement.query.filter_by(
         user_id=user.id,
-        viewed=False
+        notified=False
     ).order_by(Achievement.unlocked_at.desc()).all()
     
     return jsonify({
@@ -171,6 +171,24 @@ def achievements_mark_viewed():
     ).update({'viewed': True}, synchronize_session=False)
     
     db.session.commit()
+    
+    return jsonify({'success': True})
+
+@bp.route('/api/achievements/mark-notified', methods=['POST'])
+@user_required
+def achievements_mark_notified():
+    """Mark achievements as notified (toast shown)."""
+    user = get_current_user()
+    data = request.get_json()
+    achievement_keys = data.get('achievement_keys', [])
+    
+    if achievement_keys:
+        Achievement.query.filter(
+            Achievement.user_id == user.id,
+            Achievement.achievement_key.in_(achievement_keys)
+        ).update({'notified': True}, synchronize_session=False)
+        
+        db.session.commit()
     
     return jsonify({'success': True})
 
@@ -421,6 +439,54 @@ def reset_challenge():
     return redirect(url_for('main.index'))
 
 # ==================== PWA Routes ====================
+
+@bp.route('/admin/fix-achievements')
+@user_required
+def fix_achievements_page():
+    """Show page to fix achievement dates."""
+    return render_template('fix_achievements.html')
+
+@bp.route('/admin/fix-achievement-dates', methods=['POST'])
+@user_required
+def fix_achievement_dates():
+    """Recalculate and fix achievement unlock dates for current user."""
+    from app.utils import get_achievement_unlock_date, ACHIEVEMENT_DEFINITIONS
+    
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    # Get all achievements for this user
+    achievements = Achievement.query.filter_by(user_id=user.id).all()
+    
+    updated = []
+    for achievement in achievements:
+        old_date = achievement.unlocked_at
+        
+        # Recalculate the correct unlock date
+        new_date = get_achievement_unlock_date(user.id, achievement.achievement_key)
+        
+        # Get achievement name for display
+        definition = ACHIEVEMENT_DEFINITIONS.get(achievement.achievement_key, {})
+        name = definition.get('name', achievement.achievement_key)
+        
+        if old_date.date() != new_date.date():
+            achievement.unlocked_at = new_date
+            updated.append({
+                'key': achievement.achievement_key,
+                'name': name,
+                'old_date': old_date.strftime('%Y-%m-%d'),
+                'new_date': new_date.strftime('%Y-%m-%d')
+            })
+    
+    # Commit all changes
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'updated': updated,
+        'count': len(updated)
+    })
 
 @bp.route('/manifest.json')
 def manifest():

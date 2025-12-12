@@ -941,9 +941,10 @@ def calculate_habit_stats_for_entries(entries, end_date):
             temp_streak = 0
             prev_date = entry.date
     
-    # Calculate current streak (counting backwards from end_date)
+    # Calculate current streak (counting backwards from day before end_date)
+    # Today should never affect the streak - always start from yesterday
     current_streak = 0
-    expected_date = end_date
+    expected_date = end_date - timedelta(days=1)
     sorted_entries_desc = sorted(entries, key=lambda x: x.date, reverse=True)
     
     for entry in sorted_entries_desc:

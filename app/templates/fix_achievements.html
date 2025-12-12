@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Achievement Dates</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        #results.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            display: block;
+        }
+        #results.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            display: block;
+        }
+        .update-list {
+            margin-top: 10px;
+        }
+        .update-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .update-item:last-child {
+            border-bottom: none;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Achievement Dates</h1>
+        <p>This will recalculate the unlock dates for all your achievements based on your actual habit completion history.</p>
+        <p><strong>Note:</strong> This is a one-time fix to correct the streak achievement unlock dates.</p>
+        
+        <button id="fixButton" onclick="fixDates()">Fix Achievement Dates</button>
+        
+        <div id="results"></div>
+        
+        <a href="/stats" class="back-link">← Back to Statistics</a>
+    </div>
+
+    <script>
+        async function fixDates() {
+            const button = document.getElementById('fixButton');
+            const results = document.getElementById('results');
+            
+            button.disabled = true;
+            button.textContent = 'Processing...';
+            results.className = '';
+            results.style.display = 'none';
+            
+            try {
+                const response = await fetch('/admin/fix-achievement-dates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    results.className = 'success';
+                    if (data.count === 0) {
+                        results.innerHTML = '<strong>✓ All achievement dates are correct!</strong><br>No updates needed.';
+                    } else {
+                        let html = `<strong>✓ Successfully updated ${data.count} achievement(s):</strong>`;
+                        html += '<div class="update-list">';
+                        data.updated.forEach(item => {
+                            html += `<div class="update-item">
+                                <strong>${item.name}</strong><br>
+                                ${item.old_date} → ${item.new_date}
+                            </div>`;
+                        });
+                        html += '</div>';
+                        results.innerHTML = html;
+                    }
+                } else {
+                    results.className = 'error';
+                    results.textContent = 'Error: ' + (data.error || 'Unknown error occurred');
+                }
+            } catch (error) {
+                results.className = 'error';
+                results.textContent = 'Error: ' + error.message;
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Fix Achievement Dates';
+        }
+    </script>
+</body>
+</html>

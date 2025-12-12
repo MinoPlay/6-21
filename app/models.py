@@ -39,6 +39,7 @@ class Achievement(db.Model):
     achievement_key = db.Column(db.String(50), nullable=False)
     unlocked_at = db.Column(db.DateTime, default=datetime.utcnow)
     viewed = db.Column(db.Boolean, default=False)
+    notified = db.Column(db.Boolean, default=False)  # Whether the user has been notified (toast shown)
     
     __table_args__ = (db.UniqueConstraint('user_id', 'achievement_key', name='_user_achievement_uc'),)
     
